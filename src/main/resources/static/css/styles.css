@@ -1,0 +1,162 @@
+/* ============================================================
+   GestionTiendaElectro — hoja de estilos global
+   Servida por Spring Boot desde src/main/resources/static
+   y enlazada en las plantillas como /css/styles.css
+   ============================================================ */
+
+/* --- Variables de diseño: colores y medidas en un solo sitio.
+       Para cambiar el aspecto de toda la app basta con tocar aquí. --- */
+:root {
+    --color-primario: #1565c0;        /* azul principal (botones, cabeceras) */
+    --color-primario-oscuro: #0d47a1; /* azul para hover */
+    --color-fondo: #f4f6f8;           /* gris claro de fondo de página */
+    --color-superficie: #ffffff;      /* fondo de tarjetas/tablas/formularios */
+    --color-texto: #212529;           /* texto principal */
+    --color-texto-suave: #6c757d;     /* texto secundario */
+    --color-borde: #dee2e6;           /* bordes de tablas e inputs */
+    --color-error: #c62828;           /* mensajes de validación */
+    --radio: 8px;                     /* redondeo estándar de esquinas */
+    --sombra: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+/* --- Reset básico y tipografía --- */
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: "Segoe UI", system-ui, -apple-system, Arial, sans-serif;
+    background-color: var(--color-fondo);
+    color: var(--color-texto);
+    line-height: 1.5;
+}
+
+/* --- Contenedor central: limita el ancho y centra el contenido --- */
+.contenedor {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+}
+
+/* --- Títulos --- */
+h1 {
+    color: var(--color-primario-oscuro);
+    border-bottom: 3px solid var(--color-primario);
+    padding-bottom: 0.4rem;
+    margin-top: 0;
+}
+
+/* --- Botones ---
+       .btn = estilo base; .btn-secundario = variante gris para
+       acciones de navegación (volver, cancelar). Se aplican tanto
+       a <button> como a <a> para que luzcan igual. --- */
+.btn {
+    display: inline-block;
+    background-color: var(--color-primario);
+    color: #fff;
+    border: none;
+    border-radius: var(--radio);
+    padding: 0.55rem 1.2rem;
+    font-size: 1rem;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background-color 0.15s ease;
+}
+
+.btn:hover {
+    background-color: var(--color-primario-oscuro);
+}
+
+.btn-secundario {
+    background-color: var(--color-texto-suave);
+}
+
+.btn-secundario:hover {
+    background-color: #565e64;
+}
+
+/* Separación entre botones consecutivos */
+.acciones {
+    margin: 1rem 0;
+    display: flex;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+}
+
+/* --- Tablas de listado --- */
+table {
+    width: 100%;
+    border-collapse: collapse;      /* bordes unificados, sin dobles líneas */
+    background-color: var(--color-superficie);
+    border-radius: var(--radio);
+    overflow: hidden;               /* respeta el redondeo en las esquinas */
+    box-shadow: var(--sombra);
+}
+
+th, td {
+    padding: 0.65rem 0.9rem;
+    text-align: left;
+    border-bottom: 1px solid var(--color-borde);
+}
+
+thead th {
+    background-color: var(--color-primario);
+    color: #fff;
+    font-weight: 600;
+}
+
+/* Filas alternas sombreadas para facilitar la lectura */
+tbody tr:nth-child(even) {
+    background-color: #f8f9fa;
+}
+
+tbody tr:hover {
+    background-color: #e3f2fd;      /* resalta la fila bajo el cursor */
+}
+
+/* --- Formularios ---
+       .tarjeta envuelve el formulario en un panel blanco;
+       .campo agrupa etiqueta + input + error en columna. --- */
+.tarjeta {
+    background-color: var(--color-superficie);
+    border-radius: var(--radio);
+    box-shadow: var(--sombra);
+    padding: 1.5rem;
+    max-width: 480px;
+}
+
+.campo {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 1rem;
+}
+
+.campo label {
+    font-weight: 600;
+    margin-bottom: 0.3rem;
+}
+
+.campo input,
+.campo select {
+    padding: 0.5rem 0.7rem;
+    border: 1px solid var(--color-borde);
+    border-radius: var(--radio);
+    font-size: 1rem;
+    background-color: #fff;
+}
+
+/* Resalta el campo activo con el color corporativo */
+.campo input:focus,
+.campo select:focus {
+    outline: none;
+    border-color: var(--color-primario);
+    box-shadow: 0 0 0 3px rgba(21, 101, 192, 0.15);
+}
+
+/* --- Mensajes de error de validación (Bean Validation) --- */
+.error {
+    color: var(--color-error);
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+}

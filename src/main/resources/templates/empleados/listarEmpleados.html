@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Empleados</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body>
+    <div class="contenedor">
+        <h1>Empleados</h1>
+
+        <div class="acciones">
+            <a class="btn" href="/empleados/nuevo">Crear empleado</a>
+            <a class="btn btn-secundario" href="/">Volver al inicio</a>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Id</th><th>Nombre</th><th>Apellidos</th>
+                    <th>Email</th><th>Puesto</th><th>Fecha de alta</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="empleado : ${empleados}">
+                    <td th:text="${empleado.id}"></td>
+                    <td th:text="${empleado.nombre}"></td>
+                    <td th:text="${empleado.apellidos}"></td>
+                    <td th:text="${empleado.email}"></td>
+                    <td th:text="${empleado.puesto}"></td>
+                    <td th:text="${empleado.fechaAlta}"></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

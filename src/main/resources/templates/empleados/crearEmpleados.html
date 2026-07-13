@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Crear empleado</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body>
+    <div class="contenedor">
+        <h1>Crear empleado</h1>
+
+        <form class="tarjeta" th:action="@{/empleados}" th:object="${empleadoRequest}" method="post">
+            <div class="campo">
+                <label for="nombre">Nombre:</label>
+                <input type="text" id="nombre" th:field="*{nombre}"/>
+                <span class="error" th:if="${#fields.hasErrors('nombre')}" th:errors="*{nombre}"></span>
+            </div>
+
+            <div class="campo">
+                <label for="apellidos">Apellidos:</label>
+                <input type="text" id="apellidos" th:field="*{apellidos}"/>
+                <span class="error" th:if="${#fields.hasErrors('apellidos')}" th:errors="*{apellidos}"></span>
+            </div>
+
+            <div class="campo">
+                <label for="email">Email:</label>
+                <input type="email" id="email" th:field="*{email}"/>
+                <span class="error" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></span>
+            </div>
+
+            <div class="campo">
+                <label for="puesto">Puesto:</label>
+                <select id="puesto" th:field="*{puesto}">
+                    <option th:each="p : ${T(com.tienda.demo.empleados.model.PuestoEmpleado).values()}"
+                            th:value="${p}" th:text="${p}"></option>
+                </select>
+            </div>
+
+            <div class="acciones">
+                <button class="btn" type="submit">Guardar</button>
+                <a class="btn btn-secundario" href="/empleados">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</body>
+</html>
