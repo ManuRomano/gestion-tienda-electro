@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nueva compra — Cliente</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body>
+    <div class="contenedor">
+        <div class="barra-sesion">
+            <span>Atendiendo: <strong th:text="${empleadoActual}"></strong></span>
+            <span>Total de la compra:
+                <strong th:text="${#numbers.formatDecimal(totalCarrito, 1, 'POINT', 2, 'COMMA')} + ' €'"></strong>
+            </span>
+        </div>
+
+        <h1>¿Quién realiza la compra?</h1>
+
+        <ul class="pasos">
+            <li class="paso-hecho">1. Productos ✓</li>
+            <li class="paso-activo">2. Cliente</li>
+            <li>3. Confirmar</li>
+        </ul>
+
+        <!-- Opción A: cliente que ya está registrado -->
+        <h2>Cliente existente</h2>
+        <form class="tarjeta" th:action="@{/pedidos/nuevo/cliente}" method="post">
+            <div class="campo">
+                <label for="clienteId">Cliente:</label>
+                <select id="clienteId" name="clienteId" required>
+                    <option th:each="cliente : ${clientes}"
+                            th:value="${cliente.id}"
+                            th:text="${cliente.nombre} + ' ' + ${cliente.apellidos} + ' (' + ${cliente.nif} + ')'"></option>
+                </select>
+            </div>
+            <div class="acciones">
+                <button class="btn" type="submit">Continuar →</button>
+            </div>
+        </form>
+
+        <!-- Opción B: darlo de alta aquí mismo, sin salir de la compra.
+             Usa el mismo ClienteRequest y validaciones que el alta normal. -->
+        <h2>o dar de alta un cliente nuevo</h2>
+        <form class="tarjeta" th:action="@{/pedidos/nuevo/cliente/crear}" th:object="${clienteRequest}" method="post">
+            <div class="campo">
+                <label for="nombre">Nombre:</label>
+                <input type="text" id="nombre" th:field="*{nombre}"/>
+                <span class="error" th:if="${#fields.hasErrors('nombre')}" th:errors="*{nombre}"></span>
+            </div>
+
+            <div class="campo">
+                <label for="apellidos">Apellidos:</label>
+                <input type="text" id="apellidos" th:field="*{apellidos}"/>
+                <span class="error" th:if="${#fields.hasErrors('apellidos')}" th:errors="*{apellidos}"></span>
+            </div>
+
+            <div class="campo">
+                <label for="nif">NIF:</label>
+                <input type="text" id="nif" th:field="*{nif}"/>
+                <span class="error" th:if="${#fields.hasErrors('nif')}" th:errors="*{nif}"></span>
+            </div>
+
+            <div class="campo">
+                <label for="email">Email:</label>
+                <input type="email" id="email" th:field="*{email}"/>
+                <span class="error" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></span>
+            </div>
+
+            <div class="campo">
+                <label for="telefono">Teléfono (opcional):</label>
+                <input type="tel" id="telefono" th:field="*{telefono}"/>
+            </div>
+
+            <div class="campo">
+                <label for="direccion">Dirección (opcional):</label>
+                <input type="text" id="direccion" th:field="*{direccion}"/>
+            </div>
+
+            <div class="acciones">
+                <button class="btn" type="submit">Crear y continuar →</button>
+            </div>
+        </form>
+
+        <div class="acciones">
+            <a class="btn btn-secundario" th:href="@{/pedidos/nuevo}">← Volver a los productos</a>
+        </div>
+    </div>
+</body>
+</html>

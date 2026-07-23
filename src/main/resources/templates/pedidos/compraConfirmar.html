@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nueva compra — Confirmar</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body>
+    <div class="contenedor">
+        <div class="barra-sesion">
+            <span>Atendiendo: <strong th:text="${empleadoActual}"></strong></span>
+        </div>
+
+        <h1>Confirmar compra</h1>
+
+        <ul class="pasos">
+            <li class="paso-hecho">1. Productos ✓</li>
+            <li class="paso-hecho">2. Cliente ✓</li>
+            <li class="paso-activo">3. Confirmar</li>
+        </ul>
+
+        <!-- Si el stock se agotó entre medias, el servicio rechaza la venta
+             y el motivo se muestra aquí. -->
+        <div class="aviso-error" th:if="${error}" th:text="${error}"></div>
+
+        <div class="tarjeta tarjeta-ancha">
+            <p><strong>Cliente:</strong>
+               <span th:text="${cliente.nombre} + ' ' + ${cliente.apellidos} + ' — ' + ${cliente.nif}"></span></p>
+            <p><strong>Atendido por:</strong> <span th:text="${empleadoActual}"></span></p>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Producto</th><th class="num">Cantidad</th>
+                    <th class="num">Precio</th><th class="num">Subtotal</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="linea : ${lineasCarrito}">
+                    <td th:text="${linea.producto.nombre}"></td>
+                    <td class="num" th:text="${linea.cantidad}"></td>
+                    <td class="num"
+                        th:text="${#numbers.formatDecimal(linea.producto.precio, 1, 'POINT', 2, 'COMMA')} + ' €'"></td>
+                    <td class="num"
+                        th:text="${#numbers.formatDecimal(linea.subtotal, 1, 'POINT', 2, 'COMMA')} + ' €'"></td>
+                </tr>
+                <tr>
+                    <td colspan="3" class="num total">Total</td>
+                    <td class="num total"
+                        th:text="${#numbers.formatDecimal(totalCarrito, 1, 'POINT', 2, 'COMMA')} + ' €'"></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="acciones">
+            <form th:action="@{/pedidos/nuevo/confirmar}" method="post">
+                <button class="btn" type="submit">Confirmar compra</button>
+            </form>
+            <a class="btn btn-secundario" th:href="@{/pedidos/nuevo/cliente}">← Cambiar cliente</a>
+            <a class="btn btn-secundario" th:href="@{/pedidos/nuevo}">← Volver a los productos</a>
+        </div>
+    </div>
+</body>
+</html>

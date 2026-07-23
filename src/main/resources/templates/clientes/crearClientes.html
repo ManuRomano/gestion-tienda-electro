@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crear cliente</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body>
+    <div class="contenedor">
+        <h1>Crear cliente</h1>
+
+        <form class="tarjeta" th:action="@{/clientes}" th:object="${clienteRequest}" method="post">
+            <div class="campo">
+                <label for="nombre">Nombre:</label>
+                <input type="text" id="nombre" th:field="*{nombre}"/>
+                <span class="error" th:if="${#fields.hasErrors('nombre')}" th:errors="*{nombre}"></span>
+            </div>
+
+            <div class="campo">
+                <label for="apellidos">Apellidos:</label>
+                <input type="text" id="apellidos" th:field="*{apellidos}"/>
+                <span class="error" th:if="${#fields.hasErrors('apellidos')}" th:errors="*{apellidos}"></span>
+            </div>
+
+            <div class="campo">
+                <label for="nif">NIF:</label>
+                <input type="text" id="nif" th:field="*{nif}"/>
+                <span class="error" th:if="${#fields.hasErrors('nif')}" th:errors="*{nif}"></span>
+            </div>
+
+            <div class="campo">
+                <label for="email">Email:</label>
+                <input type="email" id="email" th:field="*{email}"/>
+                <span class="error" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></span>
+            </div>
+
+            <!-- Teléfono y dirección no llevan validación en el DTO: son datos
+                 de contacto opcionales, por eso se marcan como tales. -->
+            <div class="campo">
+                <label for="telefono">Teléfono (opcional):</label>
+                <input type="tel" id="telefono" th:field="*{telefono}"/>
+            </div>
+
+            <div class="campo">
+                <label for="direccion">Dirección (opcional):</label>
+                <input type="text" id="direccion" th:field="*{direccion}"/>
+            </div>
+
+            <div class="acciones">
+                <button class="btn" type="submit">Guardar</button>
+                <a class="btn btn-secundario" th:href="@{/clientes}">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</body>
+</html>

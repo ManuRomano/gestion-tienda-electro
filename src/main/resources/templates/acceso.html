@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acceso — Tienda Electro</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body>
+    <div class="contenedor">
+        <h1>Gestión Tienda Electro</h1>
+        <p>Indica qué empleado va a operar. Quedará registrado como responsable
+           de las ventas y altas que se realicen.</p>
+
+        <form class="tarjeta" th:action="@{/acceso}" method="post">
+            <div class="campo">
+                <label for="empleadoId">Empleado:</label>
+                <select id="empleadoId" name="empleadoId" required>
+                    <option th:each="empleado : ${empleados}"
+                            th:value="${empleado.id}"
+                            th:text="${empleado.nombre} + ' ' + ${empleado.apellidos} + ' (' + ${empleado.puesto} + ')'"></option>
+                </select>
+            </div>
+
+            <div class="acciones">
+                <button class="btn" type="submit">Entrar</button>
+            </div>
+        </form>
+    </div>
+</body>
+</html>

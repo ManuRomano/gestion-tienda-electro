@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pedidos</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body>
+    <div class="contenedor">
+        <h1>Pedidos</h1>
+
+        <div class="acciones">
+            <a class="btn" th:href="@{/pedidos/nuevo}">Nueva compra</a>
+            <a class="btn btn-secundario" th:href="@{/}">Volver al inicio</a>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Id</th><th>Fecha</th><th>Cliente</th><th>Atendido por</th>
+                    <th class="num">Artículos</th><th>Estado</th><th class="num">Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="pedido : ${pedidos}">
+                    <td th:text="${pedido.id}"></td>
+                    <td th:text="${pedido.fecha}"></td>
+                    <td th:text="${pedido.cliente.nombre} + ' ' + ${pedido.cliente.apellidos}"></td>
+                    <td th:text="${pedido.empleado.nombre} + ' ' + ${pedido.empleado.apellidos}"></td>
+                    <td class="num" th:text="${#lists.size(pedido.lineas)}"></td>
+                    <!-- La clase del badge se compone con el propio estado en minúsculas
+                         (badge--creado, badge--entregado...), definida en styles.css -->
+                    <td>
+                        <span th:class="'badge badge--' + ${#strings.toLowerCase(pedido.estado)}"
+                              th:text="${pedido.estado}"></span>
+                    </td>
+                    <td class="num"
+                        th:text="${#numbers.formatDecimal(pedido.total, 1, 'POINT', 2, 'COMMA')} + ' €'"></td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(pedidos)}">
+                    <td colspan="7" class="vacio">No hay pedidos registrados todavía.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

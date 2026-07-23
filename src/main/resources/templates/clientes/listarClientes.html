@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clientes</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body>
+    <div class="contenedor">
+        <h1>Clientes</h1>
+
+        <div class="acciones">
+            <a class="btn" th:href="@{/clientes/nuevo}">Crear cliente</a>
+            <a class="btn btn-secundario" th:href="@{/}">Volver al inicio</a>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Id</th><th>Nombre</th><th>Apellidos</th>
+                    <th>NIF</th><th>Email</th><th>Teléfono</th>
+                    <th>Estado</th><th>1ª compra</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="cliente : ${clientes}">
+                    <td th:text="${cliente.id}"></td>
+                    <td th:text="${cliente.nombre}"></td>
+                    <td th:text="${cliente.apellidos}"></td>
+                    <td th:text="${cliente.nif}"></td>
+                    <td th:text="${cliente.email}"></td>
+                    <td th:text="${cliente.telefono}"></td>
+                    <td>
+                        <span class="badge badge--activo" th:if="${cliente.activo}">Activo</span>
+                        <span class="badge badge--inactivo" th:unless="${cliente.activo}">Baja</span>
+                    </td>
+                    <td th:text="${cliente.fechaPrimeraCompra != null ? cliente.fechaPrimeraCompra : '—'}"></td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(clientes)}">
+                    <td colspan="8" class="vacio">No hay clientes registrados todavía.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

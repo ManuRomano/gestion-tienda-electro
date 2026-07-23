@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nueva compra — Productos</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body>
+    <div class="contenedor">
+        <div class="barra-sesion">
+            <span>Atendiendo: <strong th:text="${empleadoActual}"></strong></span>
+            <a class="btn btn-secundario btn-mini" th:href="@{/pedidos}">Cancelar compra</a>
+        </div>
+
+        <h1>Nueva compra</h1>
+
+        <ul class="pasos">
+            <li class="paso-activo">1. Productos</li>
+            <li>2. Cliente</li>
+            <li>3. Confirmar</li>
+        </ul>
+
+        <!-- Errores de negocio (sin stock, producto retirado...) -->
+        <div class="aviso-error" th:if="${error}" th:text="${error}"></div>
+
+        <form class="tarjeta tarjeta-ancha" th:action="@{/pedidos/nuevo/lineas}" method="post">
+            <div class="campo">
+                <label for="productoId">Electrodoméstico:</label>
+                <select id="productoId" name="productoId" required>
+                    <option th:each="producto : ${productos}"
+                            th:value="${producto.id}"
+                            th:text="${producto.nombre} + ' — ' +
+                                     ${#numbers.formatDecimal(producto.precio, 1, 'POINT', 2, 'COMMA')} + ' € (' +
+                                     ${producto.stock} + ' uds.)'"></option>
+                </select>
+            </div>
+
+            <div class="campo">
+                <label for="cantidad">Cantidad:</label>
+                <input type="number" id="cantidad" name="cantidad" value="1" min="1" required/>
+            </div>
+
+            <div class="acciones">
+                <button class="btn" type="submit">Añadir al carrito</button>
+            </div>
+        </form>
+
+        <h2>Carrito</h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Producto</th><th class="num">Cantidad</th>
+                    <th class="num">Precio</th><th class="num">Subtotal</th><th></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="linea, iter : ${lineasCarrito}">
+                    <td th:text="${linea.producto.nombre}"></td>
+                    <td class="num" th:text="${linea.cantidad}"></td>
+                    <td class="num"
+                        th:text="${#numbers.formatDecimal(linea.producto.precio, 1, 'POINT', 2, 'COMMA')} + ' €'"></td>
+                    <td class="num"
+                        th:text="${#numbers.formatDecimal(linea.subtotal, 1, 'POINT', 2, 'COMMA')} + ' €'"></td>
+                    <td>
+                        <!-- Se envía la posición de la línea, que es como el carrito la identifica -->
+                        <form th:action="@{/pedidos/nuevo/lineas/eliminar}" method="post">
+                            <input type="hidden" name="indice" th:value="${iter.index}"/>
+                            <button class="btn btn-secundario btn-mini" type="submit">Quitar</button>
+                        </form>
+                    </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(lineasCarrito)}">
+                    <td colspan="5" class="vacio">El carrito está vacío. Añade algún electrodoméstico.</td>
+                </tr>
+                <tr th:unless="${#lists.isEmpty(lineasCarrito)}">
+                    <td colspan="3" class="num total">Total</td>
+                    <td class="num total"
+                        th:text="${#numbers.formatDecimal(totalCarrito, 1, 'POINT', 2, 'COMMA')} + ' €'"></td>
+                    <td></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="acciones" th:unless="${#lists.isEmpty(lineasCarrito)}">
+            <a class="btn" th:href="@{/pedidos/nuevo/cliente}">Continuar al cliente →</a>
+            <form th:action="@{/pedidos/nuevo/vaciar}" method="post">
+                <button class="btn btn-secundario" type="submit">Vaciar carrito</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

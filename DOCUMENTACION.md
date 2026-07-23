@@ -138,7 +138,344 @@ envolver el contenido en `.contenedor`, usar las clases anteriores y asociar
 cada `label` a su campo con `for`/`id` (accesibilidad). La lógica Thymeleaf
 (`th:field`, `th:errors`, `th:each`...) no se tocó.
 
+## 8. Backend del flujo de compra: clientes, catálogo y pedidos (20/07/2026)
+
+Se construyó la estructura Java completa (sin vistas todavía) de los tres
+módulos que faltaban para poder registrar una compra de principio a fin. El
+recorrido de datos es: un **empleado** atiende a un **cliente**, que compra
+uno o varios **productos** del catálogo, generando un **pedido** con sus
+**líneas**.
+
+### 8.1. Módulo `clientes`
+
+La entidad `Cliente` ya existía. Se añadió el resto de capas:
+
+- `ClienteRepository` — CRUD heredado de `JpaRepository`.
+- `ClienteRequest` (DTO) — solo los campos que rellena el formulario (nombre,
+  apellidos, NIF, email, teléfono, dirección). **No** expone `activo` ni
+  `fechaPrimeraCompra` para que no puedan falsearse desde la web.
+- `ClienteService` con reglas propias del dominio:
+  - `crear` → el cliente nace **activo** y **sin** fecha de primera compra.
+  - `buscarActivo` → recupera un cliente que puede comprar; lanza excepción si
+    no existe o está de baja. Lo usa el pedido.
+  - `registrarPrimeraCompra` → fija `fechaPrimeraCompra` solo si estaba vacía,
+    conservando siempre la fecha de la compra más antigua.
+- `ClienteWebController` — listado, formulario y alta (patrón
+  Post-Redirect-Get), igual que empleados.
+
+### 8.2. Módulo `catalogo`
+
+- `Producto` (entidad) — `nombre`, `precio`, `stock`, `activo`. El precio es
+  **`BigDecimal`** y no `double`: en dinero, la coma flotante arrastra errores
+  de redondeo. `activo` permite la **baja lógica** (retirar de venta sin
+  borrar, para no romper pedidos históricos).
+- `ProductoRepository`, `ProductoRequest` (DTO).
+- `ProductoService` — concentra las reglas de stock, que el pedido consume:
+  - `listarDisponibles` → activos y con stock, para ofrecer en la compra.
+  - `buscarParaVenta` → valida existencia, que esté activo y que haya stock
+    suficiente antes de vender.
+  - `descontarStock` → resta unidades al producto ya validado.
+- `ProductoWebController` — mismo patrón de listado/alta.
+
+### 8.3. Módulo `pedidos`
+
+- `EstadoPedido` (enum) — `CREADO → PAGADO → ENVIADO → ENTREGADO`, más
+  `CANCELADO`.
+- `Pedido` (entidad) — cabecera de la venta: `@ManyToOne` a `Cliente` y a
+  `Empleado`, `fecha`, `estado`, `total` (guardado calculado) y `@OneToMany`
+  de líneas con `cascade = ALL` + `orphanRemoval` (las líneas se guardan y
+  borran con el pedido). El helper `addLinea` mantiene la relación bidireccional.
+- `LineaPedido` (entidad) — producto + cantidad + `precioUnitario`
+  **copiado** del producto en el momento de la compra (si el precio del
+  catálogo cambia luego, los pedidos antiguos no se alteran). `getSubtotal` es
+  un valor **derivado** (no se almacena).
+- `PedidoRequest` / `LineaPedidoRequest` (DTOs) — con `@Valid` en la lista para
+  validar también cada línea; en las líneas solo viaja el `productoId`, nunca
+  el precio.
+- `PedidoService` — el corazón del flujo. El método `crear` es **una única
+  transacción** (`@Transactional`): valida cliente y empleado, y por cada línea
+  comprueba stock, fija el precio, suma el total y descuenta existencias. Si
+  algo falla a mitad, se **revierte todo** (no queda pedido a medias ni stock
+  descontado sin venta). Se apoya en los **servicios** de los otros módulos,
+  nunca en sus repositorios, para mantener las fronteras.
+- `PedidoWebController` — el formulario carga clientes, empleados y productos
+  disponibles como opciones seleccionables.
+
+### 8.4. Cambio en `empleados`
+
+Se añadió `EmpleadoService.buscarPorId`, necesario para que el pedido asocie la
+venta al empleado que la gestiona.
+
+### 8.5. Decisiones transversales y verificación
+
+- **Comunicación entre módulos solo vía servicios.** `pedidos` depende de
+  `clientes`, `catalogo` y `empleados`, pero siempre a través de sus `Service`.
+  Las dependencias son unidireccionales (nadie depende de `pedidos`), lo que
+  facilitará extraer módulos a microservicios.
+- **Errores con excepciones estándar** (`IllegalArgumentException` /
+  `IllegalStateException`) por ahora; más adelante se centralizarán en
+  `shared/exception` con un manejador global.
+- **Verificado:** el proyecto compila y el contexto de Spring arranca
+  (`contextLoads`), creando las 5 tablas y sus claves foráneas correctamente.
+  Las columnas de dinero quedan como `numeric(38,2)`.
+
 ---
 
-*Próximos pasos previstos: completar el CRUD de empleados (editar/eliminar) y
-primera entidad del módulo `catalogo`.*
+*Próximos pasos previstos: crear las vistas Thymeleaf de clientes, catálogo y
+pedidos (el formulario de pedido con líneas dinámicas es el más interesante), y
+más adelante la entidad `Factura` para cerrar la compra.*
+
+## 9. Portada tipo kanban y listados de clientes/empleados (20/07/2026)
+
+### 9.1. Portada (`index.html`)
+
+Se rehízo la pantalla de inicio como un **tablero tipo kanban**: una columna por
+módulo (Empleados, Clientes, Catálogo, Pedidos) y, dentro de cada una, dos
+tarjetas-acción ("tickets") que enlazan a **Ver listado** (borde azul) y
+**+ Nuevo** (borde verde). Nuevas clases reutilizables en `styles.css`:
+`.tablero` (rejilla responsiva con `auto-fit`), `.columna`, `.columna-titulo`,
+`.kanban-card` y su variante `.kanban-card--crear`. Se añadió la variable
+`--color-exito` (verde) para las acciones de alta.
+
+### 9.2. Listados de clientes y empleados
+
+- **`clientes/listarClientes.html`** (nuevo): tabla con id, nombre, apellidos,
+  NIF, email, teléfono, estado y fecha de primera compra.
+- **`empleados/listarEmpleados.html`**: se alineó al mismo patrón (enlaces con
+  `th:href` en lugar de rutas fijas y fila de "sin datos").
+
+Dos utilidades nuevas en `styles.css`, pensadas para reutilizar en cualquier
+listado (incluidos los estados de pedido a futuro):
+
+- `.badge` + `.badge--activo` / `.badge--inactivo`: píldora de estado. En
+  clientes muestra **Activo/Baja** según el campo `activo`.
+- `.vacio`: fila centrada de "no hay registros", que aparece solo cuando la
+  lista está vacía (`th:if="${#lists.isEmpty(...)}"`).
+
+La fecha de primera compra nula se muestra como `—`.
+
+### 9.3. Datos de ejemplo (`data.sql`)
+
+Se añadió `src/main/resources/data.sql` con 3 empleados y 3 clientes de prueba
+(uno de baja y otro sin primera compra, para ver el badge y el `—`). Para que
+se cargue **después** de que Hibernate cree las tablas, se activó en
+`application.properties`:
+
+```
+spring.jpa.defer-datasource-initialization=true
+```
+
+Como la BD H2 es en memoria y se recrea en cada arranque, el script se ejecuta
+limpio cada vez, sin duplicados.
+
+**Verificado:** la app arranca sin errores y ambos listados renderizan los datos
+de ejemplo (badges de estado y fecha nula como `—` incluidos).
+
+**Nota de entorno:** en esta máquina el puerto 8080 está reservado por Windows,
+así que para las pruebas se lanzó en 8090 (`--server.port=8090`); la
+configuración del proyecto sigue en 8080.
+
+---
+
+*Próximos pasos previstos: formularios de alta de clientes y productos, y las
+vistas de catálogo y pedidos.*
+
+## 10. Listados de catálogo y pedidos (20/07/2026)
+
+Con esto, los cuatro módulos tienen ya su pantalla de listado y las tarjetas
+azules del tablero kanban funcionan todas.
+
+### 10.1. `catalogo/listarProductos.html`
+
+Columnas: id, nombre, precio, stock y estado. Detalles:
+
+- **Importes formateados a la española** con
+  `#numbers.formatDecimal(precio, 1, 'POINT', 2, 'COMMA')` → `1.199,00 €`
+  (punto de millares, coma decimal).
+- **Aviso de "Sin stock"**: badge junto a la cifra cuando `stock == 0`, para
+  detectar de un vistazo lo que no se puede vender.
+- **Estado Activo/Retirado** según el campo `activo` (baja lógica).
+
+### 10.2. `pedidos/listarPedidos.html`
+
+Es la vista que cruza los cuatro módulos. Columnas: id, fecha, cliente,
+empleado que atendió, nº de artículos, estado y total.
+
+- **Nombre de cliente y empleado**: se navegan las relaciones `@ManyToOne`
+  directamente desde la plantilla (`pedido.cliente.nombre`).
+- **Nº de artículos**: `#lists.size(pedido.lineas)`. La colección es *lazy*,
+  pero funciona porque Spring Boot trae activado `open-in-view` (la sesión JPA
+  sigue abierta al renderizar). Genera una consulta por pedido (N+1); cuando el
+  volumen crezca convendrá una consulta con `JOIN FETCH`.
+- **Badge de estado con color por valor**: la clase se compone en la plantilla
+  a partir del propio enum en minúsculas:
+
+  ```html
+  <span th:class="'badge badge--' + ${#strings.toLowerCase(pedido.estado)}"
+        th:text="${pedido.estado}"></span>
+  ```
+
+  Así, añadir un estado nuevo al enum solo exige añadir su regla en
+  `styles.css` (`.badge--creado`, `.badge--pagado`, `.badge--enviado`,
+  `.badge--entregado`, `.badge--cancelado`). Se añadió también la utilidad
+  `.num` para alinear a la derecha las columnas numéricas.
+
+### 10.3. Ampliación de `data.sql`
+
+Se añadieron 5 productos (uno sin stock y otro retirado) y 3 pedidos con sus
+líneas, en estados distintos (`ENTREGADO`, `CANCELADO`, `CREADO`), para poder
+comprobar todos los casos visuales.
+
+**Verificado:** la aplicación arranca sin errores y ambos listados muestran los
+datos correctamente: importes con formato español, badges de "Sin stock" y
+"Retirado", nombres de cliente/empleado resueltos, recuento de líneas correcto
+(2 artículos en el primer pedido) y los colores de cada estado aplicados.
+
+---
+
+*Próximos pasos previstos: los formularios de alta que faltan (cliente,
+producto y el de compra con líneas dinámicas), y más adelante la entidad
+`Factura` para cerrar el ciclo.*
+
+## 11. Formulario de alta de producto (20/07/2026)
+
+`catalogo/crearProductos.html`, siguiendo el mismo patrón que el de empleados:
+`<form class="tarjeta">` con un `.campo` por dato (etiqueta + input + mensaje
+de error) y la fila de `.acciones` con Guardar/Cancelar.
+
+Particularidades frente al formulario de empleados:
+
+- **Campos numéricos**: `type="number"` con `step="0.01"` en el precio (lleva
+  céntimos) y `step="1"` en el stock. El `min="0"` refleja en el navegador la
+  misma regla que `@PositiveOrZero` valida en el servidor; la validación de
+  verdad sigue siendo la del backend, la del navegador es solo comodidad.
+- **El formulario no pide `activo`**: lo fija el servicio (todo producto nace
+  activo). Es coherente con el criterio de que el DTO solo lleve lo que el
+  usuario decide.
+
+**Verificado end-to-end en el navegador:**
+
+1. Enviando el formulario vacío, se vuelve a él mostrando los tres mensajes de
+   Bean Validation ("El nombre es obligatorio", "El precio es obligatorio",
+   "El stock es obligatorio").
+2. Dando de alta "Aspiradora Dyson V15" (649,99 € / 7 uds.), se guarda,
+   redirige al listado (Post-Redirect-Get) y aparece como id 6, con el precio
+   formateado `649,99 €` y estado Activo.
+
+---
+
+*Próximos pasos previstos: formulario de alta de cliente y el de compra con
+líneas dinámicas; después, la entidad `Factura`.*
+
+## 12. Formulario de alta de cliente (20/07/2026)
+
+`clientes/crearClientes.html`, con el patrón habitual (`.tarjeta` → `.campo` →
+`.error` → `.acciones`). Seis campos: nombre, apellidos, NIF, email, teléfono y
+dirección.
+
+- **Campos obligatorios vs. opcionales**: los cuatro primeros llevan su
+  `<span class="error">`; teléfono y dirección no tienen validación en el DTO
+  (son datos de contacto opcionales), así que se etiquetan como "(opcional)" y
+  no muestran mensaje de error.
+- **Tipos de input semánticos**: `type="email"` y `type="tel"`, que además
+  mejoran el teclado en móvil.
+- **Lo que no se pide**: ni `activo` ni `fechaPrimeraCompra`. Los fija el
+  servicio — el cliente nace activo y sin fecha de primera compra, que se
+  rellenará sola con su primer pedido.
+
+**Verificado end-to-end en el navegador:**
+
+1. Formulario vacío → vuelve mostrando los cuatro errores obligatorios, y
+   teléfono/dirección sin error (correcto, son opcionales).
+2. Alta de "Elena Vargas Molina" → se guarda, redirige al listado y aparece
+   como id 4, con badge **Activo** y 1ª compra **—**, confirmando que el
+   servicio aplicó sus reglas.
+
+### Nota de desarrollo: plantillas nuevas y recarga
+
+Al crear una plantilla con la aplicación ya arrancada, Thymeleaf devolvió
+`TemplateInputException` (plantilla no encontrada): la app sirve desde
+`target/classes` y el archivo aún no se había copiado ahí. **Al añadir
+plantillas nuevas hay que reiniciar** (o relanzar Maven); editar una existente
+sí se recarga sola.
+
+---
+
+*Próximos pasos previstos: el formulario de compra con líneas dinámicas (el más
+complejo) y, después, la entidad `Factura` para cerrar el ciclo.*
+
+## 13. Sesión de empleado y asistente de compra (20/07/2026)
+
+Dos bloques que van juntos: quién opera el sistema, y el proceso de venta.
+
+### 13.1. Acceso: el empleado se elige al entrar
+
+En vez de pedir el empleado dentro del formulario de compra, se elige **al
+entrar a la aplicación**, como quien ficha en el mostrador, y firma todas las
+operaciones de esa sesión. Es un sustituto sencillo de un login (sin
+contraseñas ni Spring Security todavía). Piezas, todas en `shared`:
+
+| Clase | Rol |
+|---|---|
+| `sesion/EmpleadoSesion` | Bean `@SessionScope` con el id y nombre del empleado. Una instancia **por navegador**. |
+| `sesion/AccesoController` | Pantalla `/acceso`: elegir empleado, entrar y salir. |
+| `sesion/EmpleadoSesionAdvice` | `@ControllerAdvice` que publica `${empleadoActual}` en **todas** las vistas, sin repetirlo en cada controlador. |
+| `config/EmpleadoSesionInterceptor` | Corta cualquier petición sin empleado y redirige a `/acceso`. |
+| `config/WebConfig` | Registra el interceptor, excluyendo `/acceso`, `/css/**`, `/h2-console/**` y `/error`. |
+
+Detalle importante: `@SessionScope` inyecta un **proxy**, y por eso el bean de
+sesión puede usarse dentro de componentes singleton como el interceptor o la
+configuración. La exclusión de `/acceso` es obligatoria: sin ella habría
+redirección infinita.
+
+### 13.2. La compra, en tres pasos
+
+Flujo elegido: **primero el electrodoméstico, después el cliente** (creándolo
+en el momento si no existe), y por último confirmar.
+
+- `pedidos/service/CarritoCompra` — bean `@SessionScope` con las líneas y el
+  cliente elegido. Es estado **de interfaz**, no de negocio: nada se persiste
+  hasta confirmar. Si se añade un producto ya presente, suma cantidades en vez
+  de duplicar la línea.
+- `pedidos/dto/LineaCarrito` — *record* de solo lectura (producto, cantidad,
+  subtotal) para pintar la tabla; el carrito solo guarda ids.
+- `PedidoWebController` — los tres pasos, con guardas: si el carrito está vacío
+  devuelve al paso 1; si falta cliente, al paso 2.
+
+**Lo más relevante del diseño:** el asistente es solo interfaz. En el último
+paso arma un `PedidoRequest` y llama al `PedidoService` de siempre, que sigue
+aplicando stock, precios congelados, total y transacción. **No hubo que tocar
+la lógica de negocio para añadir el proceso por pasos.**
+
+Otros detalles:
+
+- **Validación de stock acumulativa**: al añadir se valida contra lo que ya hay
+  en el carrito (3 dentro + 2 nuevos ⇒ se comprueban 5), usando
+  `CarritoCompra.cantidadDe`.
+- **Solo se ofrece lo vendible**: productos activos con stock
+  (`listarDisponibles`) y clientes activos (`listarActivos`, método nuevo), para
+  no ofrecer opciones que el servicio luego rechazaría.
+- **Errores de negocio** (sin stock, cliente de baja) se muestran como aviso en
+  la propia pantalla, vía *flash attributes*, en lugar de una página de error.
+
+**Verificado end-to-end en el navegador:**
+
+1. Ir a `/` sin sesión redirige a `/acceso`. Se elige "Sara Núñez Vidal" y la
+   cabecera pasa a mostrar "Atendiendo: Sara Núñez Vidal".
+2. Paso 1: el desplegable solo lista los 3 productos vendibles (quedan fuera el
+   microondas sin stock y la secadora retirada). Se añaden 2 lavadoras
+   (898,00 €) y 1 televisor ⇒ total 2.097,00 €.
+3. Pedir 5 televisores habiendo 3 muestra "Stock insuficiente de Televisor LG
+   OLED 55" (disponibles: 3, solicitados: 5)" y **deja el carrito intacto**.
+4. Paso 2: solo aparecen clientes activos (Carlos, de baja, no está). Se da de
+   alta "Rubén Iglesias Mora" sin salir de la compra.
+5. Paso 3: resumen correcto y, al confirmar, se crea el **pedido 4**
+   (2.097,00 €, estado CREADO) con Sara como responsable, tomada de la sesión.
+6. Efectos colaterales correctos: el stock bajó (lavadora 12→10, televisor
+   3→2) y el cliente nuevo quedó con **1ª compra 2026-07-22**, que rellenó
+   `registrarPrimeraCompra`.
+
+---
+
+*Próximos pasos previstos: la entidad `Factura` para cerrar el ciclo de la
+compra, y edición/baja en los listados existentes.*

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crear producto</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body>
+    <div class="contenedor">
+        <h1>Crear producto</h1>
+
+        <form class="tarjeta" th:action="@{/productos}" th:object="${productoRequest}" method="post">
+            <div class="campo">
+                <label for="nombre">Nombre:</label>
+                <input type="text" id="nombre" th:field="*{nombre}"/>
+                <span class="error" th:if="${#fields.hasErrors('nombre')}" th:errors="*{nombre}"></span>
+            </div>
+
+            <!-- step=0.01 porque el precio lleva céntimos; min=0 refleja en el
+                 navegador la misma regla que valida @PositiveOrZero en el DTO. -->
+            <div class="campo">
+                <label for="precio">Precio (€):</label>
+                <input type="number" id="precio" step="0.01" min="0" th:field="*{precio}"/>
+                <span class="error" th:if="${#fields.hasErrors('precio')}" th:errors="*{precio}"></span>
+            </div>
+
+            <div class="campo">
+                <label for="stock">Stock (unidades):</label>
+                <input type="number" id="stock" step="1" min="0" th:field="*{stock}"/>
+                <span class="error" th:if="${#fields.hasErrors('stock')}" th:errors="*{stock}"></span>
+            </div>
+
+            <div class="acciones">
+                <button class="btn" type="submit">Guardar</button>
+                <a class="btn btn-secundario" th:href="@{/productos}">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</body>
+</html>

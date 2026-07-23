@@ -1,15 +1,79 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tienda Electro</title>
     <link rel="stylesheet" th:href="@{/css/styles.css}">
 </head>
 <body>
     <div class="contenedor">
+        <!-- Recuerda quién está operando; el nombre lo publica EmpleadoSesionAdvice
+             en el modelo de todas las vistas. -->
+        <div class="barra-sesion">
+            <span>Atendiendo: <strong th:text="${empleadoActual}"></strong></span>
+            <form th:action="@{/acceso/salir}" method="post">
+                <button class="btn btn-secundario btn-mini" type="submit">Cambiar empleado</button>
+            </form>
+        </div>
+
         <h1>Gestión Tienda Electro</h1>
-        <div class="acciones">
-            <a class="btn" href="/empleados">Empleados</a>
+        <p>Panel general. Elige un módulo para consultar sus registros o dar de alta uno nuevo.</p>
+
+        <div class="tablero">
+
+            <!-- Columna: Empleados -->
+            <div class="columna">
+                <div class="columna-titulo">👤 Empleados</div>
+                <a class="kanban-card" th:href="@{/empleados}">
+                    <span class="kanban-card-titulo">Ver listado</span>
+                    <span class="kanban-card-desc">Consultar la plantilla de la tienda</span>
+                </a>
+                <a class="kanban-card kanban-card--crear" th:href="@{/empleados/nuevo}">
+                    <span class="kanban-card-titulo">+ Nuevo empleado</span>
+                    <span class="kanban-card-desc">Dar de alta un trabajador</span>
+                </a>
+            </div>
+
+            <!-- Columna: Clientes -->
+            <div class="columna">
+                <div class="columna-titulo">🧑‍💼 Clientes</div>
+                <a class="kanban-card" th:href="@{/clientes}">
+                    <span class="kanban-card-titulo">Ver listado</span>
+                    <span class="kanban-card-desc">Consultar los clientes registrados</span>
+                </a>
+                <a class="kanban-card kanban-card--crear" th:href="@{/clientes/nuevo}">
+                    <span class="kanban-card-titulo">+ Nuevo cliente</span>
+                    <span class="kanban-card-desc">Registrar un cliente</span>
+                </a>
+            </div>
+
+            <!-- Columna: Catálogo -->
+            <div class="columna">
+                <div class="columna-titulo">📦 Catálogo</div>
+                <a class="kanban-card" th:href="@{/productos}">
+                    <span class="kanban-card-titulo">Ver listado</span>
+                    <span class="kanban-card-desc">Consultar los electrodomésticos</span>
+                </a>
+                <a class="kanban-card kanban-card--crear" th:href="@{/productos/nuevo}">
+                    <span class="kanban-card-titulo">+ Nuevo producto</span>
+                    <span class="kanban-card-desc">Añadir un artículo al catálogo</span>
+                </a>
+            </div>
+
+            <!-- Columna: Pedidos -->
+            <div class="columna">
+                <div class="columna-titulo">🛒 Pedidos</div>
+                <a class="kanban-card" th:href="@{/pedidos}">
+                    <span class="kanban-card-titulo">Ver listado</span>
+                    <span class="kanban-card-desc">Consultar las compras realizadas</span>
+                </a>
+                <a class="kanban-card kanban-card--crear" th:href="@{/pedidos/nuevo}">
+                    <span class="kanban-card-titulo">+ Nueva compra</span>
+                    <span class="kanban-card-desc">Registrar un pedido de cliente</span>
+                </a>
+            </div>
+
         </div>
     </div>
 </body>

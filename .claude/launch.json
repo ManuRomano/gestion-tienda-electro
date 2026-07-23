@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "gte-dev",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": ["/c", "C:\\Workspaces\\GTE\\GestionTiendaElectro\\mvnw.cmd", "spring-boot:run", "-Dspring-boot.run.arguments=--server.port=8090"],
+      "port": 8090
+    }
+  ]
+}
